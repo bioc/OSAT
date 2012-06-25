@@ -1,0 +1,53 @@
+
+## temp export everything for debug
+## exportPattern("^[[:alpha:]]+")
+
+#importMethodsFrom(Biobase, pData)
+#importFrom(xtable, xtable, print.xtable)
+import(methods)
+import(stats)
+
+export(
+       setup.sample,
+       setup.container,
+       create.optimized.setup,
+       create.experiment.setup,
+       optimal.block,
+       optimal.shuffle,
+       get.experiment.setup,
+       QC,
+       map.to.MSA,
+       multi.barplot,
+       multi.chisq.test,
+       IlluminaBeadChip,
+       GenotypingChip,
+       IlluminaBeadChip24Plate,
+       IlluminaBeadChip48Plate,
+       IlluminaBeadChip96Plate,
+       MSA4.plate,
+       BeadChip96ToMSA4MAP,
+       predefined
+        )
+
+exportMethods(
+     "getLayout",
+     "initialize",
+     "plot",
+     "show",
+     "summary",
+     "metadata",
+     "metadata<-"
+)
+exportClasses(
+              gArray,
+              gSlide,
+              BeadChip,
+              gPlate,
+              BeadPlate,
+              gAssembly,
+              gContainer,
+              gSample,
+              gExperimentSetup
+              )
+
+

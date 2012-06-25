@@ -1,0 +1,1077 @@
+\documentclass[letterpaper]{article}
+\usepackage{times}
+\usepackage{hyperref}
+%\usepackage{xtab}
+%\usepackage{url}
+\usepackage[numbers,super, sort&compress]{natbib}
+\usepackage{graphics}
+\usepackage[pdftex]{graphicx}
+\usepackage{Sweave}
+\usepackage[margin=2.5cm]{geometry}
+
+\title{An introduction to OSAT}
+\author{Li Yan, Changxing Ma, Dan Wang, Qiang Hu, Maochun Qin, Jianmin Wang, Song Liu \\ 
+\texttt{li.yan@roswellpark.org}}
+\date{\today}
+\begin{document}
+%\SweaveOpts{concordance=TRUE}
+%\VignetteIndexEntry{An introduction to OSAT}
+\maketitle
+\tableofcontents
+
+\section{Overview}\label{sec:overview}
+
+A sizable genomics study such as microarray often involves the use of multiple batches (groups) of experiment due to practical complication. The systematic, non-biological differences between batches are referred as batch effects. Batch effects are wide-spread occurrences in genomic studies, and it has been shown that noticeable variation between different batch runs can be a real concern, sometimes even larger than the biological differences \cite{lambert_learning_2012, baggerly_run_2008, scherer_batch_2009, leek_tackling_2010}. Without sound experiment design and statistical analysis methods to handle batch effects, misleading or even erroneous conclusions could be made  \cite{lambert_learning_2012, baggerly_run_2008, leek_tackling_2010}. This especially important issue is unfortunately often overlooked, partially due to the complexity and multiple steps involved in genomics studies.   
+
+
+To minimize batch effects, a careful experiment design should ensure the even distribution of biological groups and confounding factors across batches. A study where most tumor samples are collected from male and healthy ones from female will have difficulty ruling out the effect of gender. Likewise, it is equally problematic if one batch run contains most samples of a particular biological group. Therefore, in an ideal genomics design, the groups of the main interest, as well as important confounding variables should be balanced and replicated across the batches to form a Randomized Complete Block Design (RCBD) \cite{murray__2005, montgomery_design_2008, Fang_Ma_2001}. It makes the separation of the real biological effect of our interests and effects by other confounding factors statistically more powerful.
+
+
+However, despite all best effort, it is often than not that the collected samples are not complying with the original ideal RCBD design. This is due to the fact that these studies are mostly observational or quasi-experimental since we usually do not have full control over sample availability. In clinical genomics study, samples may be rare, difficult or expensive to collect, irreplaceable, or even fail QC test before genomics profiling. As a result, experiments are often driven by the availability of the final collection of samples which is usually unbalanced and incomplete. The unbalance and incompleteness nature of sample availability in genomics study, without appropriate attention, could lead to drastic batch effects. Therefore, it is necessary to develop effective and handy tool to assign collected samples across batches in an appropriate way to minimize batch effects. 
+
+We developed a tool called OSAT (Optimal Sample Assignment Tool) to facilitate the allocation of collected samples to different batches. With minimum steps, it produces setup that optimizes the even distribution of samples in groups of biological interest into different batches, reducing the confounding or correlation between batches and the biological variables of interest. It can also optimize the even distribution of confounding factors across batches. Our tool can handle challenging instances where incomplete and unbalanced sample collections are involved as well as ideal balanced RCBD. OSAT provides several predefined batch layout for some of the most commonly used genomics platform. Written in a modularized style in the open source R environment, it provides the flexibility for users to define the batch layout of their own experiment platform, as well as optimization objective function for their specific needs, in sample-to-batch assignment to minimize batch effects.  
+
+\section{Demonstration}\label{sec:demo}
+
+An example file is included for demonstration.  It represent samples from a study where the primary interest is to investigate the expression differentiation in case versus control groups (variable \texttt{SampleType}). \texttt{ Race} and \texttt{AgeGrp} are clinically important variables that may have impact on final outcome. We consider them as confounding variables. A total of 576 samples are included in the study, with one sample per row in the example file.
+
+We will use 6 Illumina 96-well HYP MultiBeadChip plates for this expression profiling experiment. Each plate will be processed at a time as a batch. This particular plate consists of 8 BeadChips, which in turn holds 12 wells in 6 rows and 2 columns. Each well holds an individual sample. We had predefined several commonly used batch layouts (e.g., chips or plates) to make the usage of OSAT straightforward and simple. See section \ref{sec:predefine} for a whole list of predefined chips and plates and more details. Our goal here is to assign samples with different characteristic as even as possible to each plate.
+
+
+
+\subsection{Example data }\label{sec:data}
+
+The data can be accessed by:
+
+% see
+% http://users.stat.umn.edu/~geyer/Sweave/foo.pdf
+% http://users.stat.umn.edu/~geyer/Sweave/foo.Rnw
+% for how to add R chunk
+% more
+% http://stat.epfl.ch/webdav/site/stat/shared/Regression/EPFL-Sweave-powerdot.pdf
+% Sweave: http://stackoverflow.com/questions/1890215/getting-r-plots-into-latex
+
+% \begin{verbatim}
+<<initialize>>=
+library(OSAT)
+inPath <- system.file('extdata', package='OSAT')
+pheno <- read.table(file.path(inPath, 'samples.txt'), 
+                    header=TRUE, sep="\t", colClasses="factor")
+@ 
+% \end{verbatim}
+
+
+<<label=tbl1,echo=FALSE,results=tex>>=
+library(xtable)
+print(xtable(summary(pheno), caption="Example Data", label = "tbl:tbl1"), table.placement = "tbp",caption.placement = "top")
+@
+
+
+% \begin{table}[ht]
+% \caption{Example data}\label{tbl:tbl1}
+% \begin{center}
+% \begin{tabular}{rllll}
+% & ID & SampleType & Race & AgeGrp \\ 
+% \hline
+%   1 & 1      :  1   & Case   :317   & European:401   & (0,30]  : 75   \\ 
+%   2 & 10     :  1   & Control:259   & Hispanic:175   & (30,40] :113   \\ 
+%   3 & 100    :  1   &  &  & (40,50] :134   \\ 
+%   4 & 101    :  1   &  &  & (50,60] :102   \\ 
+%   5 & 102    :  1   &  &  & (60,100]:152   \\ 
+%   6 & 103    :  1   &  &  &  \\ 
+%   7 & (Other):570   &  &  &  \\ 
+% \end{tabular}
+% \end{center}
+% \end{table}
+
+
+As shown in {\bf Table \ref{tbl:tbl1}}, the two groups in our primary interest \texttt{SampleType} are not balanced due to limitations in the sample collection process. To reduce possible batch effect across different plates, it is critical to make sure on each plate there are similar number of samples in each of the 2 stratas (Case/Control). Similarly, it is also preferred to have homogeneous makeup in each batch on confounding variables \texttt{ Race/AgeGrp} which are not balanced as well. {\bf Table \ref{tbl:tbl2}} is the sample distribution when we included these three important variables considered here:
+
+<<pheno2, eval=FALSE>>=
+with(pheno, as.data.frame(table(SampleType, Race, AgeGrp)))
+@ 
+<<label=tbl2,echo=FALSE,results=tex>>=
+print(xtable(with(pheno, as.data.frame(table(SampleType, Race, AgeGrp))), caption="Data distribution", label = "tbl:tbl2"), table.placement = "tbp",
+caption.placement = "top")
+@
+
+
+
+% \begin{verbatim}
+% with(pheno, as.data.frame(table(SampleType, Race, AgeGrp)))
+% \end{verbatim} 
+
+% \begin{table}[ht]
+% \caption{Data distribution}\label{tbl:tbl2}
+% \begin{center}
+% \begin{tabular}{rlllr}
+% \hline
+% & SampleType & Race & AgeGrp & Freq \\ 
+% \hline
+%   1 & Case & European & (0,30] &   8 \\ 
+%   2 & Control & European & (0,30] &  58 \\ 
+%   3 & Case & Hispanic & (0,30] &   0 \\ 
+%   4 & Control & Hispanic & (0,30] &   9 \\ 
+%   5 & Case & European & (30,40] &  21 \\ 
+%   6 & Control & European & (30,40] &  54 \\ 
+%   7 & Case & Hispanic & (30,40] &   6 \\ 
+%   8 & Control & Hispanic & (30,40] &  32 \\ 
+%   9 & Case & European & (40,50] &  34 \\ 
+%   10 & Control & European & (40,50] &  52 \\ 
+%   11 & Case & Hispanic & (40,50] &  46 \\ 
+%   12 & Control & Hispanic & (40,50] &   2 \\ 
+%   13 & Case & European & (50,60] &  40 \\ 
+%   14 & Control & European & (50,60] &  44 \\ 
+%   15 & Case & Hispanic & (50,60] &  16 \\ 
+%   16 & Control & Hispanic & (50,60] &   2 \\ 
+%   17 & Case & European & (60,100] &  84 \\ 
+%   18 & Control & European & (60,100] &   6 \\ 
+%   19 & Case & Hispanic & (60,100] &  62 \\ 
+%   20 & Control & Hispanic & (60,100] &   0 \\ 
+% \hline
+% \end{tabular}
+% \end{center}
+% \end{table}
+
+
+
+
+In the following section, we showed how OSAT can be used to perform sample-to-batch assignment for this example data.  
+
+
+\subsection{Working flow}\label{sec:workflow}
+
+First, sample pheno information and the variables considered (\texttt{i.e., SampleType, Race, AgeGrp}) can be captured by:
+
+% \begin{verbatim}
+% gs <- setup.sample(pheno, optimal=c("SampleType", "Race", "AgeGrp"))
+% \end{verbatim}
+<<gs>>=
+gs <- setup.sample(pheno, optimal=c("SampleType", "Race", "AgeGrp"))
+@ 
+
+A recommendation for practice is to put the variable of primary interest as the first of the list.
+
+Second, 6 Illumina 96-well HYP MultiBeadChip plates were needed for the 576 samples. Each plate was treated as a batch. We will refer this assembly of plates (i.e., batches) as container.
+
+% \begin{verbatim}
+<<container>>=
+gc <- setup.container(IlluminaBeadChip96Plate, 6, batch='plates')
+@ 
+% \end{verbatim}
+
+we had predefined the layout of this particular plate in our package as \texttt{IlluminaBeadChip96Plate}. See section \ref{sec:predefine} for more details on predefined plates. If the number of sample is less than the number of available wells, the empty well(s) will be left randomly throughout the plates (section \ref{emptywells}), or specified by user. Section \ref{sec:excludewell} provides additional information on how to exclude certain wells from sample assignment.
+
+
+Third, samples will be assigned into container using our default method which consists of a block randomization step followed by an  step (this will take a few minutes):
+
+% \begin{verbatim}
+<<gSetup>>=
+set.seed(123)    # to create reproducible result
+# demonstration only. nSim=5000 or more are commonly used.
+gSetup <- create.optimized.setup(sample=gs, container=gc, nSim=1000)
+@ 
+% \end{verbatim}
+This is all one need to create an optimal sample-to-batch assignment using OSAT. All relevant output information is hold in the object \texttt{gSetup}. Details on methods implemented in OSAT can be found in the next section \ref{sec:meth} and \ref{sampleAssignment}.
+
+The sample assignment can be output to CSV by:
+% \begin{verbatim}
+<<csvSetup>>=
+write.csv(get.experiment.setup(gSetup), 
+          file="gSetup.csv", row.names=FALSE)
+@
+% \end{verbatim}
+
+the output CSV file is sorted by the original row order from the sample list.
+
+After the sample-to-batch assignment, a MSA-4 robotic loader can be used to load the samples onto the MultiBeadChip plate. If we are going to use a robotic loader, such as MSA 4 robotic loader, we can map our design to the loader and export the final lineup to a CSV file,
+
+% \begin{verbatim}
+<<csvMSA>>=
+out <- map.to.MSA(gSetup, MSA4.plate)
+write.csv(out, "MSAsetup.csv", row.names = FALSE)
+@
+% \end{verbatim}
+
+the CSV file is sorted by the order used in the MSA robotic loader: 
+<<MSA>>=
+head(out)
+@ 
+% \begin{verbatim}
+% "plates","MSA_ID","ID","SampleType","Race","AgeGrp"
+% 1,"A01","9","Case","Hispanic","(60,100]"
+% 1,"B01","50","Case","European","(50,60]"
+% 1,"C01","118","Case","European","(50,60]"
+% 1,"D01","13","Case","European","(40,50]"
+% ...
+% \end{verbatim}
+
+
+
+\subsection{Summary of Results}\label{sec:optimalQC}
+
+A quick look at the sample distribution across the batches in our design created by OSAT:
+
+<<label=QC,include=FALSE, result=hide, eval=false>>=
+QC(gSetup)
+@
+
+
+\begin{figure}
+\begin{center}
+<<label=fig1,fig=TRUE,echo=FALSE>>=
+QC(gSetup)
+@
+\end{center}
+\caption{Number of samples per plate. Sample assignment using default algorithm.}
+\label{fig:optimal}
+\end{figure}
+
+
+One can perform Pearson's Chi-squared test to examine the association between batches and each of the variables considered. The results indicate that all variables considered are all highly uncorrelated with batches ( \texttt{p-value > 0.99}). See section \ref{sec:optimalQC} for more details.
+
+% \begin{figure}
+%   \centering
+% \includegraphics[width=3in]{gSetupOptimal}
+%  \caption[Optimal Assignment]{Number of samples per plate. Sample assignment using default algorithm.}
+% \label{fig:optimal}
+% \end{figure}
+
+% \begin{verbatim}
+% Test independence between "plates" and sample variables
+
+%  Pearson's Chi-squared test 
+%          Var X-squared df   p.value
+% 1 SampleType 0.2034518  5 0.9990763
+% 2       Race 0.2380335  5 0.9986490
+% 3     AgeGrp 0.8138166 20 1.0000000
+% \end{verbatim}
+
+Sample distribution by plates can also be visualized ({\bf Figure \ref{fig:optimal}}). It shows that samples with different characteristics were distributed across batches with only small variations. The small variation is largely due to the trade off in block randomizing multiple variables.  The last plot is the index of optimization steps versus value of the objective function. The blue diamond indicate the starting point, and the red diamond mark the final optimal setup. It is clear that final setup is more optimal than the starting setup. 
+
+
+If blocking the primary variable (i.e., \texttt{SampleType} ) is most important and the optimization of other variables considered are less important,  a different algorithm can be used. See section \ref{sec:optimalMethod} for an example and more details about this alternative method implemented in OSAT.
+
+
+
+\section{Methodology review}\label{sec:meth}
+
+
+From the perspective of experiment designs, blocking is the placement of experimental units in groups (blocks) that are similar to one another. Typically, a blocking factor is a source of variability that is not of primary interest but may affect the measured result. An example of a blocking factor might be the sex of patients; by blocking on sex, this source of variability is controlled for, thus leading to greater accuracy. For example, gender of patients could be treated as confounding variable when the primary interest is differential gene expression between healthy and tumor samples. By blocking on gender, this source of variability is controlled for, thus leading to greater accuracy of estimating differential gene expression. 
+
+Block randomization is an effective approach in controlling variability from nuisance variables and its interaction with variables of our primary interest. In such a design, samples with same characteristics are selected randomly to each block. One widely used design is randomized complete block design (RCBD) which requires that the sample characteristics in each block are as similar as possible \cite{murray__2005}. In RCBD experiment, when the sample size of in each experiment groups are balanced (i.e., having same number of samples), the control of variability and interaction from nuisance variables can be achieve easily and ANOVA can be used for data analysis. In most cases, RCBD are more precise than the Complete Random Design (CRD) for which no blocking is performed\cite{wu_experiments_2009, montgomery_design_2008}.
+
+Batch effect is one type of variability that is that is not of primary interest but ubiquitous in sizable genomic experiments. It had shown that, without appropriate control of batch effects, misleading or even erroneous conclusions could be made \cite{lambert_learning_2012, baggerly_run_2008, leek_tackling_2010}.  In order to minimize batch effects, the groups of the main interest, as well as important confounding variables should be balanced and replicated across the batches to form a RCBD in an ideal genomics design.
+
+However, due to the practical complications described in the Overview section, genomics experiments are often driven by the availability of the final collection of samples which is usually unbalanced and incomplete. The unbalance and incompleteness nature of sample availability thus calls for the development of effective tool to assign collected samples across batches in an appropriate way to minimize batch effects at the genomic experiment stage. 
+
+
+In this work, we focused on the development of such a tool.  Our tool is developed to optimize the even distribution of samples in groups of biological interest into different run batches, as well as the even distribution of confounding factors across batches. 
+ Without loss of generality, throughout the documents we refer variables of primary interest and the confounding variables selected to be blocked in the initial design as blocking variables, and the unique combination of levels in these variables as blocking strata or simply strata. Our goal is to minimize the differences in each stratum between batches through a block randomization step followed by an effective optimization step. Details will be discussed in the following sections.
+
+\subsection{Objective}
+
+To create sample assignment with homogeneous batches, we need to measure the variation of sample characteristics between batches. We define objective function based on principle of least square method.
+
+By combining the levels in variables of interest, we can create a unified variable. Assuming there are $s$ levels in the combined variable with $S_j$ samples in each strata, $j= 1 \dots s$. Total sample size $N = \sum_{j=1}^s S_j$. In the case of balanced design, we have equal sample size in each strata: $S_1 = \dots = S_s = S$. 
+
+Assuming we have $m$ batches with $B_i, i=1 \dots m$ wells in each batch. In an ideal balanced randomized complete block design experiment, each batch includes same number of available wells, $B_1 = \dots = B_m = B$, and equal number of samples from each sample strata. In most real cases however, batches may have different number of wells due to various reasons (such as wells reserved for QC), but the differences are usually not significant.
+
+The average (expected) number of sample from each strata to each batches is denoted as $E_{ij}$. Under most scenarios, the expected sample number would likely not be an integer. We split it to its integer part and fractal part as
+
+\begin{equation}
+E_{ij}= \frac{B_i S_j }{\sum_i B_i} = \left[ E_{ij} \right] + \delta_{ij}.
+\end{equation}
+
+where $\left[ E_{ij} \right] $ is the integer part of the expected number and $\delta_{ij}$ is the fractal part. In the case of equal batch size, it reduces to $E_{ij}= \frac{ S_j }{m}$. When we have RCBD, all $\delta_{ij}$ are zero.
+
+For an actual sample assignment 
+$$\bordermatrix{ {} & S_1 & S_2 & \ldots & S_s \cr
+B_1 & n_{11} & & \ldots & n_{1s} \cr
+B_2 & & n_{22} & \ldots & n_{2s} \cr
+\vdots & \vdots & \vdots & \ddots & \vdots \cr
+B_m & & & \ldots & n_{ms} }$$
+our goal is to minimize the difference between expected sample size $E_{ij}$ and the actual sample size $n_{ij}$.
+
+
+\subsubsection{Objective function}
+
+%Many different approaches can be used to achieve our goal. 
+In this package, we define the optimal design as a sample assignment setup that minimizes our objective function. By default, our objective function is based on the sum of squares of the difference between expected and actual sample size in each strata from the combined variables considered in assignment\cite{ma_new_2000}. Assuming there are $o$ levels in the combined optimization variable strata with $O_l$ samples in each strata, $l = 1 \dots o, \sum_l O_l = N$, then the expected number of sample in each optimization variable strata is $E_{il}^* = \frac{B_i O_l }{\sum_i B_i} $ and we define our objective function as
+
+\begin{equation}
+V = \sum_{il} ( n_{il} - E_{il}^* )^2
+\end{equation}
+where $n_{il}$ is the number of sample in each optimization strata from a sample assignment. We chose sample setup with minimum value of $V$ as our optimal sample assignment.
+
+Another objective function is a weighed version of the Sum of Squares method discussed above. Instead of treat each variable equally in the objective function, we can give them different weight to reflect the importance of the particular variable. The weight usually comes from empirical evidence. Relative weight for each optimization strata can be easily calculated based on the weight given to each variable. Assuming the weight are $w_{l}, l= 1\dots o$, then our objective function will be
+
+\begin{equation}
+V = \sum_{il} ( w_l ( n_{il} - E_{il}^*) )^2
+\end{equation}
+
+Other objective functions can be used to optimize the sample-to-batch assignment. Our package is constructed to easily adopt user-defined objective function. See section \ref{sec:define_obj} for more details.
+
+
+
+
+
+\subsection{Optimization Algorithm}\label{sec:optimalMethod} 
+
+The current version of OSAT provided two algorithms for creation of optimal sample assignment across the batches. Both algorithms are composed of a block randomization step and an optimization step. 
+
+
+The default algorithm (implemented in function \emph{optimal.shuffle}) sought to first block all variables considered (i.e., list of variables of primary interests and all confounding variables provided to the optimal argument) to generate a single initial assignment setup, then identify the optimal one which minimize the objective functions (i.e., the one with most homogeneous cross-batch strata distribution) through shuffling the initial setup.  
+
+
+The block randomization step is to create an initial setup of randomized sample assignment based on combined strata of all blocking variables considered. In this step, we sampling i sets of samples from each sample strata $S_j$ with size $\left[ E_{ij} \right] $. Similarly select $j$  sets of wells from each $B_i$ batches with size of $\left[ E_{ij} \right] $, then the two selections are linked together by the $ij$ subgroup, randomized in each of them.
+
+
+In a balanced design this will place all samples to proper batch. Otherwise we assign the rest of samples $r_j = S_j - \sum_i \left[ E_{ij} \right] $ sample to the available wells in each block $w_i = B_i - \sum_j \left[ E_{ij} \right] $. The probability of a sample in $r_j$ from strata $S_j$ assigned to a well from block $B_i$ is proportional to the fractal part of the expected sample size $\delta_{ij}$. 
+
+The goal of block randomization step is to create an initial setup of random sample assignment conformed to the blocking requirement, i.e. the samples from each stratum are evenly distributed to each batch. In the case of a RCBD, each batch will have equal number of samples with same characteristic and there is no need for further optimization. In other instances when the collection of samples is unbalanced and/or incomplete, an optimization step is needed to create a more optimal setup of sample assignment.
+
+The optimization step aims to identify an optimal setup of sample assignments from multiple candidates, which are generated through resampling the initial setup obtained in the block randomization step. Specifically, after initial setup is created, we randomly select $k$ samples from different batches and shuffle them between batches to create a new sample assignment. $k = 2$ by default but could be any number up to half of the sample size. Value of the objective function is calculated on the new setup and compared to that of the original one. If the value is smaller then the new assignment replaces the previous one. This procedure will continue until we reach a preset number of attempts (usually in the tens of thousands).
+
+Because this step only shuffles limited number of samples, computational speed is very fast, and can easily generate tens of thousands modified setup from initial setup. In addition, because it follows the decreasing of values from objective function, the method will converge relatively rapidly.  One potential concern is that this method may not be able to reach global minimum.  This concern will largely be alleviated when a significant number of shuffling is performed in real work. 
+
+%On the other hand, this method depends on the assumption that samples are reasonably close to block design. Otherwise, the blocking within batches may be disrupted because of the shuffling. For example if number of samples with certain characteristic is too low to be evenly assigned into batches, we may not be able to reach a stable optimized assignment. However, as demonstrated in our example (section \ref{sec:optimalQC}), satisfactory sample assignment is still possible even with unbalanced and incomplete distribution (Table \ref{tbl:tbl2}).
+%Another potential concern is that this method may not be able to reach global minimum. Since we are not stopping based on convergence of objective function, final setup is a local minimum is less of a concern when large enough simulation times is used. In reality, reach absolute optimal design is usually not our goal. 
+
+The alternative algorithm (implemented in function \emph{optimal.blcok}) sought to first block specified variables (e.g., list of variables of primary interests and certain confounding variables specified in the strata argument) to generate a pool of assignment setups, then select the optimal one which minimize the objective functions based on all variables considered (i.e., list of variables provided to the optimal argument, including those variables which are not included in the block randomization step). 
+
+
+More specifically, multiple (typically thousands of or more) sample assignment setups are first generated by procedure described in the block randomization step above, based only on the list of specified blocking variable(s). Then, the optimal setup is chosen by selecting the setup of sample assignment (from the pool generated in block randomization step) which minimizes the value of the objective function based on all variables considered. This algorithm will guarantee the identification of a setup that is conformed to the blocking requirement for the list of specified blocking variables, while attempt to minimize the variations between batches regarding the other variables considered. In theory it could reach global minimum for the optimization. On the other hand, due to the complexity involved in generating multiple candidate assignments through block randomization, this computational speed of this method is relatively slow. In addition, as the assignment of each setup is generated independently, the convergence to optimal might be slow.
+
+
+We applied both algorithms to our demon exemplary data and compared their results in the next section. More details of the implementations of these two methods are described in section 
+ \ref{sampleAssignment}.
+
+
+
+\subsubsection{Comparison of algorithm}
+
+To demonstrate the difference of the two algorithms, we create a new optimal setup using the second method described above (this is slower than default method and will take a few minutes):
+
+% \begin{figure}
+%   \centering
+% \includegraphics[width=3in]{gSetupBlock}
+%  \caption[Optimal Assignment]{Number of samples per plate. Sample assignment use \texttt{optimal.block} method.}
+% \label{fig:optimalBlock}
+% \end{figure}
+
+% \begin{verbatim}
+% gs2 <- setup.sample(pheno,  strata=c("SampleType"), 
+%           optimal=c("SampleType", "Race", "AgeGrp") )
+% set.seed(123)    # to create reproducible result
+% gSetup2 <- create.optimized.setup("optimal.block", 
+%           sample=gs2, container=gc, nSim=1000)
+% QC(gSetup2)
+% \end{verbatim}
+
+<<label=optblock>>=
+gs2 <- setup.sample(pheno,  strata=c("SampleType"), 
+          optimal=c("SampleType", "Race", "AgeGrp") )
+set.seed(123)    # to create reproducible result
+# demonstration only. nSim=5000 or more are commonly used.
+gSetup2 <- create.optimized.setup("optimal.block", 
+          sample=gs2, container=gc, nSim=1000)
+@ 
+<<label=optQC,include=FALSE, result=hide, eval=false>>=
+QC(gSetup2)
+@
+\begin{figure}
+\begin{center}
+<<label=fig2,fig=TRUE,echo=FALSE>>=
+<<optQC>>
+@
+\end{center}
+\caption{Number of samples per plate. Sample assignment use \texttt{optimal.block} method.}
+\label{fig:optimalBlock}
+\end{figure}
+
+
+In this setup, we treat \texttt{SampleType} as our only blocking variable in the block randomization step. The other two variables, together with \texttt{SampleType}, will be optimized in the optimization step. Comparing to the result using default algorithm in section \ref{sec:optimalQC} which block all three variables in block randomization step, Pearson's Chisq test shows \texttt{p-value} increase on our blocking variable \texttt{SampleType} and decrease on other two variables not included in the block randomization step, reflecting the trade-off in prioritizing the blocking on variable of our primary interest. {\bf Figure \ref{fig:optimalBlock}} shows the blocking on our primary interest \texttt{SampleType} is almost perfect, with small variation only due to the inherent limitation of the starting data (i.e., unbalanced sample collection). On the other hand, the uniformity of the other two variables not included in block randomization step had been scarified (compared with {\bf Figure \ref{fig:optimal}}). The last plot is the index of generated setups versus value of the objective function. %In contrast to \texttt{optimal.shuffle} method, the value is random along the optimization steps. 
+The blue diamond indicate the first generated setup, and the red diamond mark the final selected setup. It is clear that the optimization step picked up the most optimal one from the pool of geneerated setups.  
+
+
+% \begin{verbatim}
+% Test independence between "plates" and sample variables
+% Pearson's Chi-squared test 
+%          Var   X-squared df   p.value
+% 1 SampleType  0.03507789  5 0.9999879
+% 2       Race  2.10946918  5 0.8338000
+% 3     AgeGrp 11.01198196 20 0.9459112
+% \end{verbatim}
+
+
+
+
+\subsection{Potential problems with completely random assignment}\label{sec:random}
+
+Simply performing complete randomizations could lead to undesired sample-to-batch assignment, especially for unbalanced and/or incomplete sample sets. In fact, there is substantial chance that any one of the variables in the sample will be statistically dependent on batches if complete randomization is carried out. %if blocking design is not employed. 
+%Simulation and theory indicated that the probability of such case is the p-value chosen for the statistic test. 
+For example, simulation and theory shows that, if only one random variable is involved and we randomly assign samples to different batches, there will be about 5\% chance that statistical dependency exists between batch and the variable (data not shown). With increasing number of variables involved, the overall chance that any one of the variables show a statistically significant difference between batches will increase drastically. Simulation shows that, when simple randomization method is used with three variables, there is about 14\% chance that at least one of the variables is statistically depending on batches (data not shown). This phenomenal is well known and linked directly to the multi-testing problem. Sometimes the choice of randomization seed can produce unacceptable results. For example, if we randomly assign our samples to the container, the innocent choice of a seed 397 in our R session will show: 
+
+% \begin{figure}
+%   \centering
+% \includegraphics[width=3in]{random}
+%  \caption[Optimal Assignment]{Number of samples per plate. A bad complete random assignment.}
+% \label{fig:random}
+% \end{figure}
+
+% \begin{verbatim}
+<<label=random>>=
+set.seed(397)        # an unfortunate choice
+c1 <- getLayout(gc)  # available wells
+c1 <- c1[order(runif(nrow(c1))),] # shuffle randomly
+randomSetup <- cbind(pheno, c1[1:nrow(pheno), ]) 
+     # create a sample assignment
+@ 
+<<label=randomfig,include=FALSE, result=hide, eval=false>>=
+multi.barplot(randomSetup, grpVar='plates', 
+      varList=c("SampleType", "Race", "AgeGrp"), 
+      main="A bad random case")
+@ 
+\begin{figure}
+\begin{center}
+<<label=fig3,fig=TRUE,echo=FALSE>>=
+<<randomfig>>
+@
+\end{center}
+\caption{Number of samples per plate. A bad complete random assignment.}
+\label{fig:random}
+\end{figure}
+<<label=random2>>=
+multi.chisq.test(randomSetup, grpVar='plates', 
+      varList=c("SampleType", "Race", "AgeGrp"))
+@ 
+% \end{verbatim}
+
+
+
+% \begin{verbatim}
+%          Var X-squared df     p.value
+% 1 SampleType  13.25243  5 0.021124664
+% 2       Race  14.22455  5 0.014244218
+% 3     AgeGrp  39.75020 20 0.005371387
+% \end{verbatim}
+
+
+
+Pearson's Chisq test indicate all three variables are statistically dependent on batches with \texttt{p-values < 0.05}. {\bf Figure \ref{fig:random}} shows the sample distribution in each plate based on this assignment.
+
+
+\section{Classes and Methods}
+
+We present brief descriptions for some of the classes and methods defined in the package. For more details, please refer to the manual.
+%(TODO, similar to limmaUsersGuide and browseVignettes, Additional documents can be called using function     \texttt{classDocuments} and manual.)
+
+\subsection{Sample}
+
+The sample information from data frame x, blocking variables, and other variables considered in the optimization step can be integrated by creating a class \texttt{gSample} object using the construction function:
+
+\begin{verbatim}
+setup.sample(x, optimal, strata)
+\end{verbatim}
+
+If pheno data is a phenoData slot in an \texttt{ExpressionSet} object  \texttt{x} then the construction function should be called by:
+\begin{verbatim}
+setup.sample(pData(x), optimal, strata)
+\end{verbatim}
+
+We can inspect the data regarding to variables considered and resulting strata by typing its name. Using our example data, 
+<<label=gsNew>>=
+gs <- setup.sample(pheno, optimal=c("SampleType", "Race", "AgeGrp"),
+           strata=c("SampleType"))
+gs
+@ 
+% \begin{verbatim}
+% gs <- setup.sample(pheno, optimal=c("SampleType", "Race", "AgeGrp"),
+%            strata=c("SampleType"))
+% > gs
+
+% An object of class "gSample"
+% The raw data are
+%   ID SampleType     Race   AgeGrp
+% 1  1       Case Hispanic (60,100]
+% 2  2       Case Hispanic (60,100]
+% 3  3       Case European (60,100]
+% 4  4       Case European  (50,60]
+% 5  5       Case European  (50,60]
+% 6  6       Case European   (0,30]
+
+%  ... 
+%      ID SampleType     Race  AgeGrp
+% 571 571    Control European (40,50]
+% 572 572    Control Hispanic (30,40]
+% 573 573    Control European (30,40]
+% 574 574    Control Hispanic (30,40]
+% 575 575    Control European (40,50]
+% 576 576    Control European  (0,30]
+
+%  Blocking strata in the data:
+
+%   SampleType Freq sFactor
+% 1       Case  317       1
+% 2    Control  259       2
+
+%  Optimization strata in the data
+
+%    SampleType     Race   AgeGrp Freq oFactor
+% 1        Case European   (0,30]    8       1
+% 2     Control European   (0,30]   58       2
+% 3        Case Hispanic   (0,30]    0       3
+% 4     Control Hispanic   (0,30]    9       4
+% 5        Case European  (30,40]   21       5
+% 6     Control European  (30,40]   54       6
+% 7        Case Hispanic  (30,40]    6       7
+% 8     Control Hispanic  (30,40]   32       8
+% 9        Case European  (40,50]   34       9
+% 10    Control European  (40,50]   52      10
+% 11       Case Hispanic  (40,50]   46      11
+% 12    Control Hispanic  (40,50]    2      12
+% 13       Case European  (50,60]   40      13
+% 14    Control European  (50,60]   44      14
+% 15       Case Hispanic  (50,60]   16      15
+% 16    Control Hispanic  (50,60]    2      16
+% 17       Case European (60,100]   84      17
+% 18    Control European (60,100]    6      18
+% 19       Case Hispanic (60,100]   62      19
+% 20    Control Hispanic (60,100]    0      20
+% \end{verbatim}
+
+in addition to variables from the original sample dataset, two new factors are created: \texttt{sFactor} and \texttt{oFactor} are factors represent the combined strata created based on the combination of variables considered, respectively.
+Some getter functions exist for a \texttt{gSample} object; refer to manual for more details.
+
+
+
+\subsection{Container}\label{sec:container}
+
+In high-throughput genomics experiment the specimens are usually placed into assembly of plates that have fixed number of chips and wells. All information related to the experimental instrument layout is kept in a class \texttt{gContainer} object. We need to know the number of plates used, the plate's layout, the layout of chips on each plate, and the layout of the wells on each chip. The \texttt{gContainer} object holds all these information. It also hold our decision on which level of blocks (plates or chips ) the batch effect need to be considered. For large scale experiments (several hundreds of samples or more) we usually concern batch effect between plates. Occasionally, for smaller sample size, we may chose 'chips' level in the construction of the container object.
+In addition, if for any reason certain wells in the assembly are not available for sample placement (for example reserved for negative control), a list of excluded wells on these plates can be specified. The object can be constructed by its constructor:
+
+
+\begin{verbatim}
+setup.container(plate, n, block='plate', exclude=NULL, ...)
+\end{verbatim}
+
+In  example, we used 6 Illumina 96-well HYP MultiBeadChip plates. This particular plate consists of 8 BeadChips each, which in turn holds 12 wells in 6 rows and 2 columns. We are trying to control the plate level batch effect, 
+
+% \begin{verbatim}
+<<label=gcNew>>=
+gc <- setup.container(IlluminaBeadChip96Plate, 6, 
+          batch='plates')
+gc
+@ 
+% \end{verbatim}
+
+Relevant information can be reviewed by simply typing the name of the container:
+
+% \begin{verbatim}
+% An object of class "gContainer"
+
+% It consists of 6 BeadPlate plates.
+% The block level is set at plates level.
+%   plates cFactor Freq
+% 1      1       1   96
+% 2      2       2   96
+% 3      3       3   96
+% 4      4       4   96
+% 5      5       5   96
+% 6      6       6   96
+% The container layout is
+% @data$container
+%   plates chipRows chipColumns chips rows columns wells chipID rowID wellID
+% 1      1        1           1     1    1       1     1      1     1      1
+% 2      1        1           1     1    2       1     2      1     1      2
+% 3      1        1           1     1    3       1     3      1     1      3
+% 4      1        1           1     1    4       1     4      1     1      4
+% 5      1        1           1     1    5       1     5      1     1      5
+% 6      1        1           1     1    6       1     6      1     1      6
+%   cFactor
+% 1       1
+% 2       1
+% 3       1
+% 4       1
+% 5       1
+% 6       1
+
+%  ... 
+%     plates chipRows chipColumns chips rows columns wells chipID rowID wellID
+% 571      6        2           4     8    1       2     7     48   286    571
+% 572      6        2           4     8    2       2     8     48   286    572
+% 573      6        2           4     8    3       2     9     48   286    573
+% 574      6        2           4     8    4       2    10     48   286    574
+% 575      6        2           4     8    5       2    11     48   286    575
+% 576      6        2           4     8    6       2    12     48   286    576
+%     cFactor
+% 571       6
+% 572       6
+% 573       6
+% 574       6
+% 575       6
+% 576       6
+% \end{verbatim}
+a new variable \texttt{cFactor} is create to represent the batches in the container. Variable \texttt{wellID} identify all wells in the container. Each well will hold an individual sample.
+
+A number of commonly used types of batch layout (e.g., plates and/or chips by Illumina Inc.) had been predefined in the package for the convenience of users, which makes the creation of a container object fairly easy in many cases. Please see next  section \ref{sec:predefine} for a whole list of predefined batch layout. It is also very straightforward to define the batch layout of your own genomics platform. See section \ref{sec:predefine} and manual for more details.
+
+The exclusion list is simply a data frame that indicated which wells in the plate assembly need to be excluded from block randomization and and optimization for any reasons. See additional case study in section \ref{sec:excludewell} for explanation and example.
+
+
+
+
+\subsubsection{Predefined batch layout}\label{sec:predefine}
+
+
+%http://en.wikipedia.org/wiki/DNA_microarray called genome chip, DNA chip or gene array
+%http://www.sciencemag.org/site/products/dnamicro.xhtml
+Function \texttt{predefined()} shows a list of predefined object that represent some of commonly used plates and chips. Simply typing the name in R shows the layout and other information of each predefined chips and plates. 
+
+\textbf{IlluminaBeadChip} is a chip with 2 columns and 6 rows, a total of 12 wells:
+
+<<label=pre1>>=
+IlluminaBeadChip
+@ 
+% \begin{verbatim}
+% > IlluminaBeadChip
+% An object of class "BeadChip"
+% Illumina Bead Chip has 6 rows and 2 columns. 
+% The layout is
+% @layout
+% rows columns wells
+% 1 1 1 1
+% 2 2 1 2
+% 3 3 1 3
+% 4 4 1 4
+% 5 5 1 5
+% 6 6 1 6
+% 7 1 2 7
+% 8 2 2 8
+% 9 3 2 9
+% 10 4 2 10
+% 11 5 2 11
+% 12 6 2 12
+% \end{verbatim}
+
+
+\textbf{GenotypingChip} is a chip with 1 columns and 12 rows. 
+
+\textbf{IlluminaBeadChip24Plate, 
+IlluminaBeadChip48Plate, 
+IlluminaBeadChip96Plate
+}
+are plates that hold 2, 4, 8 \texttt{IlluminaBeadChip} chips and have 24, 48, 96 wells, respectively.
+
+
+
+
+
+\subsubsection{Define your own batch layout}
+
+As long as the physical layout is know for a plate or chip, it is straight forward to define your own object in this package. For example, if you have a chip that has 12 wells arranged by a 2 columns and 6 rows pattern, and the index of the wells are filled columns by columns, then we can create (and have a look at) a new chip object simply:
+
+% \begin{verbatim}
+<<label=own1>>=
+myChip <- new("BeadChip", nRows=6, nColumns=2, byrow=FALSE, 
+      comment="Illumina Bead Chip have 6 rows and 2 columns.")
+myChip 
+@ 
+% \end{verbatim}
+
+The \texttt{byrow} parameter is same as that in function \texttt{matrix()}. The chip happens to be identical to the \texttt{IlluminaBeadChip} defined in the package:
+
+% \begin{verbatim}
+<<label=own2>>=
+identical(myChip, IlluminaBeadChip)
+@ 
+% \end{verbatim}
+
+Similarly, we can define plate simply based on the chips it contains. Here we create a new plate that consistent 8 \texttt{myChip} we just defined:
+
+<<label=own3>>=
+myPlate <- new("BeadPlate", chip=IlluminaBeadChip,
+      nRows=2L, nColumns=4L,
+      comment="Illumina BeadChip Plate with 8 chips and 96 wells")
+myPlate
+identical(myPlate, IlluminaBeadChip96Plate)
+@ 
+
+it happens to be identical to the \texttt{IlluminaBeadChip96Plate} plate defined in the package.
+
+%TODO: add a link to external PDF shows the layout.
+
+%TODO: Jeff for more plates/chips.
+
+
+\subsection{Sample assignment}\label{sampleAssignment}
+
+Sample assignment and all relevant information are stored in a class \texttt{gExperimentSetup} object. 
+If only block randomization is needed, we can simply create a experiment assignment by
+
+<<label=s1>>=
+gSetup0 <- create.experiment.setup(gs, gc)
+myAssignment <- get.experiment.setup(gSetup0)
+@ 
+
+However in most cases we optimize our setup based on our choice of blocking variables and other variables considered. This can be done by calling function
+
+\begin{verbatim}
+create.optimized.setup(fun, sample, container, nSim, ...)
+\end{verbatim}
+
+where \texttt{fun} is the name of a user defined objective function. Parameter \texttt{fun} can be omitted, then the default optimization function \texttt{optimal.shuffle} is called. \texttt{sample} and \texttt{container} are objects from \texttt{gSample} and \texttt{gContainer} classes, respectively. The function will return a class \texttt{gExperimentSetup} object which holds all releveant information.
+
+The default optimization function \texttt{optimal.shuffle(sample, container, nSim, k=2, ...)} will first create initial setup of assignment as candidate through blocking all variables considered. Then it will randomly select and shuffle \texttt{k} (default k=2) samples between batches to create a new setup. It will calculate the objective function in the new setup and have its result compared to that of the current candidate. The candidate setup will be replaced if the value of objective function in new setup is smaller. The process will repeat up to \texttt{nSim} times. 
+
+Alternatively, we could use function \texttt{optimal.block(sample, container, nSim)}, which is to create multiple setup of sample assignment based only on specified blocking variables, and select the optimal setup based on all variables considered (including the variables not included in block randomization step).
+
+\begin{verbatim}
+gSetup1 <- create.optimized.setup(fun="optimal.shuffle", 
+      sample=gs, container=gc, nSim=1000)
+gSetup2 <- create.optimized.setup(fun="optimal.block", 
+      sample=gs, container=gc, nSim=1000)
+\end{verbatim}
+
+Same functionality can be invoked by apply the optimizing objective function to any \texttt{gExperimentSetup} object directly:
+
+\begin{verbatim}
+gSetup1 <- optimal.shuffle(gSetup0, nSim=1000)
+gSetup2 <- optimal.block(gSetup0, nSim=1000)
+\end{verbatim}
+
+This syntax make it easy to try algorithms and compare the results. More details on create your own optimizing objective function see below.
+
+% TODO: weighted LS method
+
+
+
+\subsubsection{Define your own optimizing objective function}\label{sec:define_obj}
+
+Our package allows user to define optimization objective function themselves. It is straightforward for user to define their own optimization objective function, following a few parameter requirements for the package to work. In particular, the objective function parameters should include a \texttt{gExperimentSetup} object, and number of loops used in the form of
+
+\begin{verbatim}
+myFun <- function(x, nSim, ...)
+\end{verbatim}
+
+It can include additional parameters for its own in \dots parameter list.
+
+Also, the function should return a list %(TODO: create a class) 
+that including following elements:
+
+\begin{verbatim}
+return(list(setup=, link=, average=, dev=))
+\end{verbatim}
+
+where elements \texttt{setup} is a \texttt{gExperimentSetup} object, \texttt{link} is a data frame present a link between the sample and container, \texttt{average} is the expected number of samples from each blocking strata in each of the optimization blocks, \texttt{dev} a vector of values created by the actual objective function. 
+
+%TODO, may simplify this to return an gExperimentSetup only? more information is returned for debugging and future improvement?
+
+In the current version of OSAT, we have defined two different algorithms.%(TODO:4 after include weighted LS)
+They will generally generate similar assignment plan. 
+
+%TODO: modify the criteria so we have chance to jump out the local minimum?
+
+%TODO: an example of convergence in the second method.
+
+\subsection{QC, summary, and output}\label{sec:QC}
+
+To see a summary of the experimental design, simply type the name of the object we created:
+
+\begin{verbatim}
+gSetup
+\end{verbatim}
+
+most relevant information will be shown.
+
+The final design can be retrieved by
+
+\begin{verbatim}
+gSetup.data <- get.experiment.setup(gSetup)
+\end{verbatim}
+
+which creates a data frame holding linked data of sample variables and container variables, sorted by the initial order from the sample list.
+
+The distribution of the sample by batches can be visualized graphically using function \texttt{plot(gSetup, ...)}% (rename it to barplot()?)
+
+%TODO: override plot() function with additional parameter, for example to see plot individually??
+
+\begin{verbatim}
+plot(gSetup, main="Summary")
+\end{verbatim}
+
+which will create a barplot of sample counts in each batch for every variable considered in design.
+
+We can simply use function \texttt{QC()} to get both plot and Pearson's Chi-squared test of independence between batches and variables involved:
+
+\begin{verbatim}
+QC(gSetup)
+\end{verbatim}
+
+To output the design layout in CSV format,
+
+\begin{verbatim}
+write.csv(get.experiment.setup(gSetup), file="gSetup.csv", 
+          row.names=FALSE)
+\end{verbatim}
+
+\subsubsection{Map to robotic loader}
+
+The sample plates are usually loaded into machine through a robotic loader, for example MRA-4 loader. The layout of the loader plate can be seen in the included documents. After the assignment to the plates are finished, we can map the bead chip plate to the MRA-4 plate, and have it exported to a CSV file by
+
+\begin{verbatim}
+out <- map.to.MSA(gSetup)
+write.csv(out, "MSAsetup.csv", row.names = FALSE)
+\end{verbatim}
+
+
+\section{Additional Case studies}
+
+In this section we present a few more case studies to further demonstrate the usage of OSAT package.
+
+\subsection{Incomplete batches}\label{emptywells}
+
+Since the number of wells available on a batch (e.g., plate/chip) is fixed, often experimenter cannot fill up all of them due to sample unavailability. In this scenario it is recommended that we distribute the unused wells randomly across all batches. This is done by default in our program without any additional instruction. 
+
+For example, assuming there are 10 samples not available for some reason in our sample list,  the following create setup using the same container as before with the rest of 566 samples:
+
+% \begin{verbatim}
+% no need to actually run
+<<label=extra1, eval=FALSE>>=
+# for demonstration, assume 10 bad samples
+badSample <- sample(576, 10, replace=FALSE)  
+# create sample object using available samples
+gs3 <- setup.sample(pheno[-badSample, ], 
+      optimal=c("SampleType", "Race", "AgeGrp"), 
+      strata=c("SampleType") )
+# use the same container setup as before
+# demonstration only. nSim=5000 or more are commonly used.
+gSetup3 <- create.optimized.setup(sample=gs3, 
+        container=gc, nSim=1000)
+@ 
+% \end{verbatim}
+
+To fill batches sequentially and have the empty wells left at the end of last plate is discouraged. This practice will create a batch that is immediately different from the others, making statistical analysis more complex and less powerful. However, if there are strong reasons to do so, we can exclude the wells at the end of last plate for sample assignment, using method described in the following section.
+
+\subsection{Excluded well positions}\label{sec:excludewell} 
+
+If for any reason we need to reserve certain wells for other usage, we can exclude them from the sample assignment process. For this one can create a data frame to mark these excluded wells. Any wells in the container can be identified by its location identified by three variable \texttt{"plates", "chips", "wells"}. Therefore the data frame for the excluded wells should have these three columns.
+
+For example, if we will use the first well of the first chip on each plate to hold  QC samples, these wells will not be available for sample placement. We have 6 plates in our example so the following will reserve the 6 wells from sample assignment:
+
+% \begin{verbatim}
+<<label=extra2>>=
+excludedWells <- data.frame(plates=1:6, chips=rep(1,6), 
+                 wells=rep(1,6))
+@ 
+% \end{verbatim}
+
+Our program can let you exclude multiple wells at the same position of plate/chip. For example, the following data frame will exclude the first well on each chips regardless how many plates we have:
+
+% \begin{verbatim}
+<<label=extra3>>=
+ex2 <- data.frame(wells=1)
+@ 
+% \end{verbatim}
+
+In our example we have 48 chips so 48 wells will be excluded using this data frame for exclusion.
+We can pass our exclusion data frame to the container setup function using this command:
+
+% \begin{verbatim}
+<<label=extra4>>=
+gc3 <- setup.container(IlluminaBeadChip96Plate, 6, 
+            batch='plates', exclude=excludedWells)
+@ 
+% \end{verbatim}
+
+\subsection{Blocking and optimization on chip level}
+
+In certain circumstances, batch effects between chips maybe considered. This task can be accomplished by simply indicate the level of block in the container construction, for example
+
+% \begin{verbatim}
+<<label=extra5>>=
+cnt <- setup.container(IlluminaBeadChip96Plate, 2, batch='chips')
+@ 
+% \end{verbatim}
+
+will create a container with 16 chips. Blocking and optimization on chip level will be used in following sample assignment. 
+
+\subsection{Paired samples}
+
+OSAT can be used to handle experiment design with paired examples. 
+
+Assuming each individual listed in our \texttt{samples.txt} file had 2 specimens. One is collected prior certain treatment and the other after. We would like to keep the two specimens on the same chip, to reduce the batch effect on the treatment effect. Other requirements are similar to those in the section \ref{sec:data}.
+
+To accomplish this new task, one chip can only hold specimens from 6 individuals. We would first assign specimen pairs onto chips, then shuffle them within each chip randomly to further eliminate potential location bias within chips.  To do this, we will create a mock chip that only has 6 rows and 1 column instead of 2 columns. Each row on this mock chip will be assign to one individual. Plate and container are created based on this new chip. After assignment, we will expand the chips to 2 columns. 
+
+First of all the pairs are assigned into rows of the mock chip (noticed now we need 12 plates):
+
+% \begin{verbatim}
+<<label=pair1>>=
+# create mock chip. each row represent one individual
+newChip <- new("BeadChip",  nRows=6, nColumns=1, byrow=FALSE, 
+   comment="mock chip")
+# a mock plate based on above chip, same physical layout
+newPlate <- new("BeadPlate", chip=newChip,
+   nRows=2L, nColumns=4L, 
+   comment="mock plate")
+# create containers based on above mock chip/plate
+gcNew <- setup.container(newPlate, 12, batch="plates")
+
+# assign pairs into locations on the mock chip
+# this will take some time
+set.seed(12345)
+# demonstration only. nSim=5000 or more are commonly used.
+gPaired <- create.optimized.setup("optimal.block", sample=gs, 
+           container=gcNew, nSim=1000)
+@           
+% \end{verbatim}
+
+The above steps create sample setup that place paired sample to rows of each real BeadChip, the following steps expand the chips to real Illumina BeadChip. First assign specimens into first column on each real chip: 
+
+% \begin{verbatim}
+<<label=pair2>>=
+set.seed(456)
+out1 <- get.experiment.setup(gPaired)
+out1$Replica <- FALSE
+idx <- sample(nrow(out1), ceiling(nrow(out1)/2), replace=FALSE)
+     # randomly decided if the first specimen is placed in column 1
+out1[idx, "Replica"] <- TRUE
+@ 
+% summary(out1$Replica)
+% \end{verbatim}
+
+above we randomly selected half of before-treatment specimens and half of after-treatment specimens into first the column. The rest specimens will be placed into the second column:
+
+% \begin{verbatim}
+<<label=pair3>>=
+out2 <- out1
+out2$columns <- 2          # specimen placed in the second column
+out2$wells <- out2$wells+6 # correct well number
+out2$Replica <- !out1$Replica          # indicate second specimen 
+
+out3 <- rbind(out1, out2)  # all specimens
+
+# sort to order on plates/chips/rows
+idx1 <- with(out3, order(plates, chips,  rows, columns, wells))
+out3 <- out3[idx1,]  # sort to order on plates/chips/wells
+@ 
+% head(out3,12)
+% \end{verbatim}
+
+This procedure will place paired specimens on the same row of the same chip. If do not want to keep pairs of specimens on the same row, we can shuffle one more time:
+
+% \begin{verbatim}
+<<label=pair4>>=
+## shuffle within chip
+set.seed(789)
+idx2 <- with(out3, order(plates, chips, runif(nrow(out3))))
+out4 <- cbind(out3[, 1:8], out3[idx2, 9:11], Replica=out3[, 12])
+
+# sort to order on plates/chips/wells
+idx3 <- with(out4, order(plates,  chips, wells))
+out4 <- out4[idx3,]
+@ 
+% head(out4,12)
+% \end{verbatim}
+
+Check the assignment:
+
+<<label=pair5, eval=false>>=
+# SampleType and replica distribution by plate
+ftable(xtabs( ~plates +SampleType+ Replica, out3))
+@ 
+% \begin{verbatim}
+% # SampleType and replica distribution by plate
+% ftable(xtabs( ~plates +SampleType+ Replica, out3))
+
+%                   Replica FALSE TRUE
+% plates SampleType                   
+% 1      Case                  26   26
+%        Control               22   22
+% 2      Case                  27   27
+%        Control               21   21
+% 3      Case                  27   27
+%        Control               21   21
+% ...
+% \end{verbatim}
+
+The final assignment quality can be checked by Pearson Chisq test and visualized by barplot:
+
+<<label=pairfig,include=FALSE, result=hide, eval=false>>=
+multi.barplot(out3, grpVar='plates', varList=c("SampleType", "Replica", 
+              "Race", "AgeGrp"), main="paired sample")
+@ 
+\begin{figure}
+\begin{center}
+<<label=figPair,fig=TRUE,echo=FALSE>>=
+<<pairfig>>
+@
+\end{center}
+\caption{Number of samples per plate. Paired specimens are placed on the same chip. Sample assignment use \texttt{optimal.block} method.}
+\label{fig:paired}
+\end{figure}
+<<label=pair2>>=
+multi.chisq.test(out3, grpVar='plates', varList=c("SampleType", "Replica", 
+              "Race", "AgeGrp"))
+@ 
+
+% \begin{verbatim}
+% multi.barplot(out3, grpVar='plates', varList=c("SampleType", "Replica", 
+%               "Race", "AgeGrp"), main="paired sample")
+% multi.chisq.test(out3, grpVar='plates', varList=c("SampleType", "Replica", 
+%               "Race", "AgeGrp"))
+
+%          Var  X-squared df   p.value
+% 1 SampleType  0.4910905 11 0.9999988
+% 2    Replica  0.0000000 11 1.0000000
+% 3       Race  6.4843605 11 0.8391738
+% 4     AgeGrp 30.0921186 44 0.9455054
+% \end{verbatim}
+
+% \begin{figure}
+%   \centering
+% \includegraphics[width=3in]{paired}
+%  \caption[Optimal Assignment]{Number of samples per plate. Paired specimens are placed on the same chip. Sample assignment use \texttt{optimal.block} method.}
+% \label{fig:paired}
+% \end{figure}
+
+The Pearson's test and Figure \ref{fig:paired} show perfect \texttt{Replica} balance between plates due to the fact all paired specimens are placed on the same chip.
+
+
+\section{Discussion}
+Genomics experiments are often driven by the availability of the final collection of samples which is usually unbalanced and incomplete. Without appropriate attention, the unbalance and incompleteness nature of sample availability might lead to drastic batch effects. We developed a handy tool called OSAT (Optimal Sample Assignment Tool) to facilitate the allocation of collected samples to different batches in genomics study. With a block randomization step followed by an optimization step, it produces setup that optimizes the even distribution of samples in groups of biological interest into different batches, reducing the confounding or correlation between batches and the biological variables of interest. It can also optimize the homogeneous distribution of confounding factors across batches. While motivated to handle challenging instances where incomplete and unbalanced sample collections are involved, OSAT can also handle ideal balanced RCBD. 
+
+As demonstrated in this document (section \ref{sec:random}), complete randomization, often used in the sample assignment step of experiment practice, may produce undesirable setup showing batch dependence.  OSAT package is designed to avoid such scenario, by introducing a simple pipeline to create sample assignment that minimizes association between sample characteristic and batches. OSAT provides predefined batch layout for some of the most commonly used genomics platform. Written in a modularized style in the open source R environment, it provides the flexibility for users to define the batch layout of their own experiment platform, as well as optimization objective function for their specific needs, in sample-to-batch assignment to minimize batch effects.
+
+We should also mention that although the impact of batch effect on genomics study might be minimized through proper design and sample assignment, it may not be completely eliminated. Even with perfect design and best effort in all stages of experiment including sample-to-batch assignment, it is impossible to define or control all potential batch effects. Many statistical methods had been developed to estimate and reduce the impact of batch effect at the data analysis stage (i.e, after the experiment part is done) \cite{leek_sva_2012, chen_removing_2011, huang_r/dwd:_2012}. It is recommended that analytic methods handling batch effects are employed in all stages of a genomics study, from experiment design to data analysis.
+
+
+\href{mailto:li.yan@@roswellpark.org}{li.yan@@roswellpark.org}
+
+\section{Session information}
+<<sessioninfo>>=
+sessionInfo()
+@ 
+
+% \begin{verbatim}
+% > sessionInfo ()
+% R version 2.14.2 (2012-02-29)
+% Platform: x86_64-pc-linux-gnu (64-bit)
+% locale:
+% [1] LC_CTYPE=en_US.UTF-8 LC_NUMERIC=C 
+% [3] LC_TIME=en_US.UTF-8 LC_COLLATE=en_US.UTF-8 
+% [5] LC_MONETARY=en_US.UTF-8 LC_MESSAGES=en_US.UTF-8 
+% [7] LC_PAPER=C LC_NAME=C 
+% [9] LC_ADDRESS=C LC_TELEPHONE=C 
+% [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C 
+% \end{verbatim}
+
+
+\bibliographystyle{unsrt}	       % (uses file "plain.bst")
+\bibliography{randomizationPackage}
+
+\end{document}
+
+

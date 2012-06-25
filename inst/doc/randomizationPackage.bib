@@ -1,0 +1,309 @@
+
+@article{leek_tackling_2010,
+	title = {Tackling the widespread and critical impact of batch effects in high-throughput data},
+	volume = {11},
+	issn = {1471-0056},
+	url = {http://dx.doi.org/10.1038/nrg2825},
+	doi = {10.1038/nrg2825},
+	number = {10},
+	journal = {Nat Rev Genet},
+	author = {Leek, Jeffrey T. and Scharpf, Robert B. and Bravo, Héctor Corrada and Simcha, David and Langmead, Benjamin and Johnson, W. Evan and Geman, Donald and Baggerly, Keith and Irizarry, Rafael A.},
+	month = oct,
+	year = {2010},
+	pages = {733--739}
+},
+
+@misc{_stop_????,
+	title = {Stop Ignoring Experimental Design (or my head will explode) {\textbar} Our 2 {SNPs…®}},
+	url = {http://blog.goldenhelix.com/?p=322},
+	howpublished = {http://blog.goldenhelix.com/?p=322}
+},
+
+@misc{_principal_????,
+	title = {Principal Component Analysis Overview {\textbar} Golden Helix, Inc.},
+	url = {http://www.goldenhelix.com/SNP_Variation/Manual/svs7/principal_component_analysis_overview.html},
+	howpublished = {{http://www.goldenhelix.com/SNP\_Variation/Manual/svs7/principal\_component\_analysis\_overview.html}}
+},
+
+@article{leek_sva_2012,
+	title = {The sva package for removing batch effects and other unwanted variation in high-throughput experiments},
+	url = {http://bioinformatics.oxfordjournals.org/content/early/2012/01/17/bioinformatics.bts034.abstract},
+	doi = {10.1093/bioinformatics/bts034},
+	abstract = {Summary: Heterogeneity and latent variables are now widely recognized as major sources of bias and variability in high-throughput experiments. The most well-known source of latent variation in genomic experiments are batch effects - when samples are processed on different days, in different groups, or by different people. However, there are also a large number of other variables that may have a major impact on high-throughput measurements. Here we describe the sva package for identifying, estimating, and removing unwanted sources of variation in high-throughput experiments. The sva package supports surrogate variable estimation with the sva function, direct adjustment for known batch effects with the {ComBat} function, and adjustment for batch and latent variables in prediction problems with the fsva {function.Availability:} The R package sva is freely available from {http://www.bioconductor.org.Contact:} jleek@jhsph.edu},
+	journal = {Bioinformatics},
+	author = {Leek, Jeffrey T. and Johnson, W. Evan and Parker, Hilary S. and Jaffe, Andrew E. and Storey, John D.},
+	month = jan,
+	year = {2012}
+},
+
+@misc{_how_????,
+	title = {How to design a successful microarray experiment},
+	url = {http://gbic.biol.rug.nl/~rbreitling/publications/microarray_tips.htm},
+	howpublished = {http://gbic.biol.rug.nl/{\textasciitilde}rbreitling/publications/microarray\_tips.htm}
+},
+
+@article{chen_removing_2011,
+	title = {Removing Batch Effects in Analysis of Expression Microarray Data: An Evaluation of Six Batch Adjustment Methods},
+	volume = {6},
+	shorttitle = {Removing Batch Effects in Analysis of Expression Microarray Data},
+	url = {UR  - http://dx.doi.org/10.1371/journal.pone.0017238,http://dx.doi.org/10.1371/journal.pone.0017238},
+	doi = {10.1371/journal.pone.0017238},
+	abstract = {The expression microarray is a frequently used approach to study gene expression on a genome-wide scale. However, the data produced by the thousands of microarray studies published annually are confounded by “batch effects,” the systematic error introduced when samples are processed in multiple batches. Although batch effects can be reduced by careful experimental design, they cannot be eliminated unless the whole study is done in a single batch. A number of programs are now available to adjust microarray data for batch effects prior to analysis. We systematically evaluated six of these programs using multiple measures of precision, accuracy and overall performance. {ComBat}, an Empirical Bayes method, outperformed the other five programs by most metrics. We also showed that it is essential to standardize expression data at the probe level when testing for correlation of expression profiles, due to a sizeable probe effect in microarray data that can inflate the correlation among replicates and unrelated samples.},
+	number = {2},
+	journal = {{PLoS} {ONE}},
+	author = {Chen, Chao and Grennan, Kay and Badner, Judith and Zhang, Dandan and Gershon, Elliot and Jin, Li and Liu, Chunyu},
+	month = feb,
+	year = {2011},
+	pages = {e17238}
+},
+
+@article{li_adjusting_2007,
+	title = {Adjusting batch effects in microarray expression data using empirical Bayes methods},
+	volume = {8},
+	url = {http://biostatistics.oxfordjournals.org/content/8/1/118.abstract},
+	doi = {10.1093/biostatistics/kxj037},
+	abstract = {Non-biological experimental variation or “batch effects" are commonly observed across multiple batches of microarray experiments, often rendering the task of combining data from these batches difficult. The ability to combine microarray data sets is advantageous to researchers to increase statistical power to detect biological phenomena from studies where logistical considerations restrict sample size or in studies that require the sequential hybridization of arrays. In general, it is inappropriate to combine data sets without adjusting for batch effects. Methods have been proposed to filter batch effects from data, but these are often complicated and require large batch sizes () to implement. Because the majority of microarray studies are conducted using much smaller sample sizes, existing methods are not sufficient. We propose parametric and non-parametric empirical Bayes frameworks for adjusting data for batch effects that is robust to outliers in small sample sizes and performs comparable to existing methods for large samples. We illustrate our methods using two example data sets and show that our methods are justifiable, easy to apply, and useful in practice. Software for our method is freely available at: http://biosun1.harvard.edu/complab/batch/.},
+	number = {1},
+	journal = {Biostatistics},
+	author = {Li, Cheng and Rabinovic, Ariel},
+	month = jan,
+	year = {2007},
+	pages = {118 --127}
+},
+
+@article{li_model-based_2001,
+	title = {Model-based analysis of oligonucleotide arrays: Expression index computation and outlier detection},
+	volume = {98},
+	shorttitle = {Model-based analysis of oligonucleotide arrays},
+	url = {http://www.pnas.org/content/98/1/31.abstract},
+	doi = {10.1073/pnas.98.1.31},
+	abstract = {Recent advances in {cDNA} and oligonucleotide {DNA} arrays have made it
+ possible to measure the abundance of {mRNA} transcripts for many genes
+ simultaneously. The analysis of such experiments is nontrivial because
+ of large data size and many levels of variation introduced at different
+ stages of the experiments. The analysis is further complicated by the
+ large differences that may exist among different probes used to
+ interrogate the same gene. However, an attractive feature of
+ high-density oligonucleotide arrays such as those produced by
+ photolithography and inkjet technology is the standardization of chip
+ manufacturing and hybridization process. As a result, probe-specific
+ biases, although significant, are highly reproducible and predictable,
+ and their adverse effect can be reduced by proper modeling and analysis
+ methods. Here, we propose a statistical model for the probe-level data,
+ and develop model-based estimates for gene expression indexes. We also
+ present model-based methods for identifying and handling
+ cross-hybridizing probes and contaminating array regions. Applications
+ of these results will be presented elsewhere.},
+	number = {1},
+	journal = {Proceedings of the National Academy of Sciences},
+	author = {Li, Cheng and Wong, Wing Hung},
+	month = jan,
+	year = {2001},
+	pages = {31 --36}
+},
+
+@misc{__????,
+	url = {http://jlab.byu.edu//ComBat/Download_files/ComBat.R},
+	howpublished = {{http://jlab.byu.edu//ComBat/Download\_files/ComBat.R}}
+},
+
+@book{scherer_batch_2009,
+  title = {Batch effects and noise in microarray experiments: sources and solutions},
+	isbn = {9780470741382},
+	shorttitle = {Batch effects and noise in microarray experiments},
+	abstract = {Batch Effects and Noise in Microarray Experiments: Sources and Solutions looks at the issue of technical noise and batch effects in microarray studies and illustrates how to alleviate such factors whilst interpreting the relevant biological information. Each chapter focuses on sources of noise and batch effects before starting an experiment, with examples of statistical methods for detecting, measuring, and managing batch effects within and across datasets provided online. Throughout the book the importance of standardization and the value of standard operating procedures in the development of genomics biomarkers is emphasized. Key Features: A thorough introduction to Batch Effects and Noise in Microrarray Experiments. A unique compilation of review and research articles on handling of batch effects and technical and biological noise in microarray data. An extensive overview of current standardization initiatives. All datasets and methods used in the chapters, as well as colour images, are available on www.the-batch-effect-book.org, so that the data can be reproduced. An exciting compilation of state-of-the-art review chapters and latest research results, which will benefit all those involved in the planning, execution, and analysis of gene expression studies.},
+	publisher = {John Wiley and Sons},
+	author = {Scherer, Andreas},
+	month = dec,
+	year = {2009},
+	keywords = {{DNA} microarrays, Gene Expression Profiling, Medical / Biostatistics, Oligonucleotide Array Sequence Analysis - methods, Oligonucleotide Array Sequence Analysis/ methods, Reproducibility of Results, Science / Life Sciences / Cell Biology, Science / Life Sciences / Genetics \& Genomics}
+},
+
+@book{wu_experiments_2009,
+  edition = {2nd},
+	title = {Experiments: Planning, Analysis, and Optimization},
+	isbn = {0471699462},
+	shorttitle = {Experiments},
+	publisher = {Wiley},
+	author = {Wu, C. F. Jeff and Hamada, Michael S.},
+	month = aug,
+	year = {2009}
+},
+
+@book{montgomery_design_2008,
+	edition = {7},
+	title = {Design and Analysis of Experiments},
+	isbn = {0470128666},
+	publisher = {Wiley},
+	author = {Montgomery, Douglas C.},
+	month = jul,
+	year = {2008}
+}
+
+@article{lambert_learning_2012,
+	title = {Learning from Our {GWAS} Mistakes: From Experimental Design to Scientific Method},
+	issn = {1465-4644, 1468-4357},
+	shorttitle = {Learning from our {GWAS} mistakes},
+	url = {http://biostatistics.oxfordjournals.org/content/early/2012/01/24/biostatistics.kxr055},
+	doi = {10.1093/biostatistics/kxr055},
+	journal = {Biostatistics},
+	author = {Lambert, Christophe G and Black, Laura J},
+	month = jan,
+	year = {2012}
+},
+
+@article{huang_r/dwd:_2012,
+	title = {{R/DWD:} {Distance-Weighted} Discrimination for Classification, Visualization and Batch Adjustment},
+	volume = {28},
+	issn = {1367-4803, 1460-2059},
+	shorttitle = {{R/DWD}},
+	url = {http://bioinformatics.oxfordjournals.org/content/28/8/1182},
+	doi = {10.1093/bioinformatics/bts096},
+	abstract = {Summary: {R/DWD} is an extensible package for classification. It is built based on a recently developed powerful classification method called distance weighted discrimination {(DWD).} {DWD} is related to, and has been shown to be superior to, the support vector machine in situations that are fundamental to bioinformatics, such as very high dimensional data. {DWD} has proven to be very useful for several fundamental bioinformatics tasks, including classification, data visualization and removal of biases, such as batch effects. Earlier {DWD} implementations, however, relied on Matlab, which is not free and requires a license. The major contribution of the {R/DWD} package is an implementation that is completely in R and thus can be used without any requirements for licensing or software purchase. In addition, {R/DWD} also provides efficient solvers for second-order-cone-programming and quadratic programming.
+Availability and implementation: The package is freely available from cran.r-project.org.
+Contact: hanwen.huang@uth.tmc.edu; {Perry\_Haaland@bd.com}
+Supplementary information: Supplementary data are available at Bioinformatics online.},
+	number = {8},
+	journal = {Bioinformatics},
+	author = {Huang, Hanwen and Lu, Xiaosun and Liu, Yufeng and Haaland, Perry and Marron, J. S},
+	month = apr,
+	year = {2012},
+	pages = {1182--1183}
+},
+
+@article{mak_john_2011,
+	title = {The importance of new statistical methods for high-throughput sequencing},
+	volume = {29},
+	copyright = {© 2011 Nature Publishing Group, a division of Macmillan Publishers Limited. All Rights Reserved.},
+	issn = {1087-0156},
+	url = {http://www.nature.com/nbt/journal/v29/n4/full/nbt.1831.html},
+	doi = {10.1038/nbt.1831},
+	abstract = {John Storey provides his take on the importance of new statistical methods for high-throughput sequencing.},
+	number = {4},
+	journal = {Nature Biotechnology},
+	author = {Mak, H. Craig and John Storey},
+	month = apr,
+	year = {2011},
+	pages = {331--333}
+},
+
+@article{hansen_sequencing_2011,
+	title = {Sequencing technology does not eliminate biological variability},
+	volume = {29},
+	copyright = {© 2011 Nature Publishing Group, a division of Macmillan Publishers Limited. All Rights Reserved.},
+	issn = {1087-0156},
+	url = {http://www.nature.com/nbt/journal/v29/n7/full/nbt.1910.html},
+	doi = {10.1038/nbt.1910},
+	number = {7},
+	journal = {Nature Biotechnology},
+	author = {Hansen, Kasper D and Wu, Zhijin and Irizarry, Rafael A and Leek, Jeffrey T},
+	month = jul,
+	year = {2011},
+	pages = {572--573}
+},
+
+@article{baggerly_run_2008,
+	title = {Run Batch Effects Potentially Compromise the Usefulness of Genomic Signatures for Ovarian Cancer},
+	volume = {26},
+	issn = {{0732-183X}, 1527-7755},
+	url = {http://jco.ascopubs.org/content/26/7/1186},
+	doi = {10.1200/JCO.2007.15.1951},
+	number = {7},
+	journal = {Journal of Clinical Oncology},
+	author = {Baggerly, Keith A and Coombes, Kevin R and Neeley, E. Shannon},
+	month = mar,
+	year = {2008},
+	pages = {1186--1187}
+},
+
+@article{hu_importance_2005,
+	title = {The importance of experimental design in proteomic mass spectrometry experiments: some cautionary tales},
+	volume = {3},
+	issn = {1473-9550},
+	shorttitle = {The importance of experimental design in proteomic mass spectrometry experiments},
+	url = {http://www.ncbi.nlm.nih.gov/pubmed/15814023},
+	abstract = {Proteomic expression patterns derived from mass spectrometry have been put forward as potential biomarkers for the early diagnosis of cancer and other diseases. This approach has generated much excitement and has led to a large number of new experiments and vast amounts of new data. The data, derived at great expense, can have very little value if careful attention is not paid to the experimental design and analysis. Using examples from surface-enhanced laser desorption/ionisation time-of-flight {(SELDI-TOF)} and matrix-assisted laser desorption-ionisation/time-of-flight {(MALDI-TOF)} experiments, we describe several experimental design issues that can corrupt a dataset. Fortunately, the problems we identify can be avoided if attention is paid to potential sources of bias before the experiment is run. With an appropriate experimental design, proteomics technology can be a useful tool for discovering important information relating protein expression to disease.},
+	number = {4},
+	journal = {Briefings in Functional Genomics \& Proteomics},
+	author = {Hu, Jianhua and Coombes, Kevin R and Morris, Jeffrey S and Baggerly, Keith A},
+	month = feb,
+	year = {2005},
+	note = {{PMID:} 15814023},
+	keywords = {Biomedical Research, Breast Neoplasms, Calibration, {Disease-Free} Survival, Genomics, Humans, Mass Spectrometry, Neoplasms, Phylogeny, Protein Array Analysis, proteomics, Random Allocation, Research Design, Spectrometry, Mass, {Matrix-Assisted} Laser {Desorption-Ionization}, Tumor Markers, Biological},
+	pages = {322--331}
+},
+
+@incollection{murray__2005,
+	copyright = {Copyright © 2005 John Wiley \& Sons, Ltd},
+	isbn = {9780470011812},
+	url = {http://onlinelibrary.wiley.com/doi/10.1002/0470011815.b2a16054/abstract},
+	booktitle = {Randomized Complete Block Designs},
+	publisher = {John Wiley \& Sons, Ltd},
+	author = {Murray, L.},
+	month = jul,
+	year = {2005},
+	keywords = {additivity, Analysis of Variance, blocking, experimental design, interaction, linear models, variance components}
+}
+
+
+
+@article{marsit_dna_2011,
+	title = {{DNA} methylation array analysis identifies profiles of blood-derived {DNA} methylation associated with bladder cancer},
+	volume = {29},
+	issn = {1527-7755},
+	url = {http://www.ncbi.nlm.nih.gov/pubmed/21343564},
+	doi = {10.1200/JCO.2010.31.3577},
+	abstract = {{PURPOSE}
+
+Epigenetic alterations in tissues targeted for cancer play a causal role in carcinogenesis. Changes in {DNA} methylation in nontarget tissues, specifically peripheral blood, can also affect risk of malignant disease. We sought to identify specific profiles of {DNA} methylation in peripheral blood that are associated with bladder cancer risk and therefore serve as an epigenetic marker of disease susceptibility.
+
+
+{METHODS}
+
+We performed genome-wide {DNA} methylation profiling on participants involved in a population-based incident case-control study of bladder cancer.
+
+
+{RESULTS}
+
+In a training set of 112 cases and 118 controls, we identified a panel of 9 {CpG} loci whose profile of {DNA} methylation was significantly associated with bladder cancer in a masked, independent testing series of 111 cases and 119 controls {(P} {\textless} .0001). Membership in three of the most methylated classes was associated with a 5.2-fold increased risk of bladder cancer (95\% {CI}, 2.8 to 9.7), and a model that included the methylation classification, participant age, sex, smoking status, and family history of bladder cancer was a significant predictor of bladder cancer (area under the curve, 0.76; 95\% {CI}, 0.70 to 0.82). {CpG} loci associated with bladder cancer and aging had neighboring sequences enriched for transcription-factor binding sites related to immune modulation and forkhead family members.
+
+
+{CONCLUSION}
+
+These results indicate that profiles of epigenetic states in blood are associated with risk of bladder cancer and signal the potential utility of epigenetic profiles in peripheral blood as novel markers of susceptibility to this and other malignancies.},
+	number = {9},
+	journal = {Journal of clinical oncology: official journal of the American Society of Clinical Oncology},
+	author = {Marsit, Carmen J and Koestler, Devin C and Christensen, Brock C and Karagas, Margaret R and Houseman, E Andres and Kelsey, Karl T},
+	month = mar,
+	year = {2011},
+	note = {{PMID:} 21343564},
+	keywords = {Adult, Aged, Carcinoma in Situ, {Case-Control} Studies, {CpG} Islands, {DNA} methylation, {DNA}, Neoplasm, Epigenomics, Female, Gene Expression Profiling, Humans, Male, Middle Aged, Neoplasm Invasiveness, Oligonucleotide Array Sequence Analysis, Polymerase Chain Reaction, Prognosis, {ROC} Curve, Urinary Bladder Neoplasms},
+	pages = {1133--1139}
+}
+
+
+@article{ma_new_2000,
+	title = {A new approach in constructing orthogonal and nearly orthogonal arrays},
+	volume = {50},
+	issn = {0026-1335},
+	url = {http://www.springerlink.com/content/35hr81g64uua2x5m/abstract/},
+	doi = {10.1007/s001840050049},
+	abstract = {Orthogonal arrays have been constructed by a number of mathematical tools such as orthogonal Latin squares, Hadamard matrices, group theory and finite fields. Wang and Wu (1992) proposed the concept of a nearly orthogonal array and found a number of such arrays with high efficiency. In this paper we propose some criteria for non-orthogonality and two algorithms for the construction of orthogonal and nearly orthogonal arrays evincing higher efficiency than that obtained by Wang and Wu.},
+	number = {3},
+	journal = {Metrika},
+	author = {Ma, {Chang-Xing} and Fang, {Kai-Tai} and Liski, Erkki},
+	year = {2000},
+	keywords = {Mathematics and Statistics},
+	pages = {255--268},
+	file = {SpringerLink Snapshot:C:\Documents and Settings\user\Application Data\Mozilla\Firefox\Profiles\b7f57g9c.default\zotero\storage\QHJ29ZTK\abstract.html:text/html}
+}
+
+
+@book{Fang_Ma_2001,
+	title = {Uniform and Orthogonal Designs},
+	isbn = {7030091892},
+	publisher = {Science Press,Beijing},
+	author = {Fang, {Kai-Tai} and Ma, {Chang-Xing} },
+	month = sep,
+	year = {2001}
+}
