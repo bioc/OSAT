@@ -316,7 +316,7 @@ Other objective functions can be used to optimize the sample-to-batch assignment
 
 
 
-\subsection{Optimization Algorithm}\label{sec:optimalMethod} 
+\subsection{Algorithms}\label{sec:optimalMethod} 
 
 The current version of OSAT provided two algorithms for creation of optimal sample assignment across the batches. Both algorithms are composed of a block randomization step and an optimization step. 
 
@@ -349,7 +349,7 @@ We applied both algorithms to our demon exemplary data and compared their result
 
 
 
-\subsubsection{Comparison of algorithm}
+\subsubsection{Comparison of algorithms}
 
 To demonstrate the difference of the two algorithms, we create a new optimal setup using the second method described above (this is slower than default method and will take a few minutes):
 

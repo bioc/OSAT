@@ -96,6 +96,7 @@ setMethod("initialize", "gPlate",
                                      .Object@nRows=2L
                                    }
             if(!missing(nColumns)){  .Object@nColumns <- nColumns
+                                     }else{
                                      .Object@nColumns <- 4L
                                      }
             if(!missing(comment))   .Object@metadata$comment <- comment
