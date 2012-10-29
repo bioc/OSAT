@@ -6,41 +6,56 @@
 ## this is one constructor of above the critical part deal with block variable
 ## assume block ID in sample is 'sFactor', and in wells 'cFactor' 
 assign.sample.to.container <- function(smpl, wells, debug=FALSE){
-  factorList <- c(colnames(smpl), colnames(wells))
-  if (length(factorList) != length(unique(factorList)))
-    stop("Common column names exists in sample and container! Cannot go on")
-  
-  avgCount <- average.2D(smpl, wells, s='sFactor', b='cFactor')
-  mCount <- floor(avgCount)     ## interger part
-  rCount <- avgCount - mCount   ## residual part
-  
-  ## step 1, assign mCount
-            
-  selectedWells <- block.strata.sampling(wells, mCount, 'cFactor', 'sFactor')
-  w1 <- selectedWells$selected
-  w1 <- w1[order(w1$sFactor, w1$cFactor),]
-if(debug) { print("w1");print(head(w1))}
-
-  selectedSamples <- block.strata.sampling(smpl, t(mCount), 'sFactor', 'cFactor')
-  s1 <- selectedSamples$selected
-  colnames(s1)[3] <- "ID_unit_sample"
-  
-  ## link selected samples to wells
-  part1 <- cbind(smpl[s1[,3],], wells[w1[,3],] )
-  if(debug) { print("part1 nrow=");print(nrow(part1))}
-  if(debug) print(with(part1, table(cFactor, sFactor))) ## same as mCount
-  if(debug) {print(mCount);print(head(part1))}
-  
-  ## step 2, assign the rest samples
-  x <- selectedSamples$residual
-  w <- selectedWells$residual
-  r <- fraction.strata(x=x, s='sFactor',
-                       w=w, b='cFactor', p=rCount)
-  if(debug){print("fraction r"); print(head(r))}
-  part2 <- cbind.data.frame(x[r[, "sFactor"],], w[r[,"cFactor"],])
-  if(debug){ print("part2 nrow=");print(nrow(part2))}
-  final <- rbind.data.frame(cbind(part1, stage=1), cbind(part2, stage=2))
-}
+    factorList <- c(colnames(smpl), colnames(wells))
+    if (length(factorList) != length(unique(factorList))) 
+        stop("Common column names exists in sample and container! Cannot go on")
+    avgCount <- average.2D(smpl, wells, s = "sFactor", b = "cFactor")
+    mCount <- floor(avgCount)
+    rCount <- avgCount - mCount
+    selectedWells <- block.strata.sampling(wells, mCount, "cFactor", 
+        "sFactor")
+    w1 <- selectedWells$selected
+    w1 <- w1[order(w1$sFactor, w1$cFactor), ]
+    if (debug) {
+        print("w1")
+        print(head(w1))
+    }
+    selectedSamples <- block.strata.sampling(smpl, t(mCount), 
+        "sFactor", "cFactor")
+    s1 <- selectedSamples$selected
+    colnames(s1)[3] <- "ID_unit_sample"
+    part1 <- cbind(smpl[s1[, 3], ], wells[w1[, 3], ])
+    if (debug) {
+        print("part1 nrow=")
+        print(nrow(part1))
+    }
+    if (debug) 
+        print(with(part1, table(cFactor, sFactor)))
+    if (debug) {
+        print(mCount)
+        print(head(part1))
+    }
+    x <- selectedSamples$residual
+    w <- selectedWells$residual
+  if(nrow(x)>0 & nrow(w)>0){
+    r <- fraction.strata(x = x, s = "sFactor", w = w, b = "cFactor", 
+        p = rCount)
+    if (debug) {
+        print("fraction r")
+        print(head(r))
+    }
+    part2 <- cbind.data.frame(x[r[, "sFactor"], ], w[r[, "cFactor"], 
+        ])
+    if (debug) {
+        print("part2 nrow=")
+        print(nrow(part2))
+    }
+    final <- rbind.data.frame(cbind(part1, stage = 1), cbind(part2, 
+        stage = 2))
+  }else if (nrow(x)==0 & nrow(w)==0){
+    final <- cbind(part1, stage = 1)
+  }
+  }
 # tmp <- assign.sample.to.container(smpl, wells, debug=FALSE)
 # multi.barplot(tmp, grpVar='plates', varList=c("SampleType", "Race", "AgeGrp"), main="testing assignment")
 

@@ -553,7 +553,7 @@ In addition, if for any reason certain wells in the assembly are not available f
 
 
 \begin{verbatim}
-setup.container(plate, n, block='plate', exclude=NULL, ...)
+setup.container(plate, n, batch='plate', exclude=NULL, ...)
 \end{verbatim}
 
 In  example, we used 6 Illumina 96-well HYP MultiBeadChip plates. This particular plate consists of 8 BeadChips each, which in turn holds 12 wells in 6 rows and 2 columns. We are trying to control the plate level batch effect, 
