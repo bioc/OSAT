@@ -114,8 +114,9 @@ block.strata.sampling <- function(x, m, s, b){
         #  split to block (corresponding to columns in m)
       yy <- cbind.data.frame(rep(iIDX, ),
                              rep(colnames(m), m[i,]), y)
+      selected <- rbind(selected, yy)
     }
-    selected <- rbind(selected, yy)
+    
   }
   colnames(selected) <- c(s, b, "ID_unit")
   return(list(selected=selected, residual=x[-selected[,3],]))
