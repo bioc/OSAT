@@ -1,0 +1,13 @@
+CHANGES IN VERSION 1.6.0
+
+BUG FIXES
+
+    o "arguments imply differing number of rows:" error when some categories of samples are small.
+
+
+CHANGES IN VERSION 1.4.1
+
+BUG FIXES
+
+    o program quit when number of samples is equal to number of available wells.
+

@@ -1,7 +1,7 @@
 Package: OSAT
 Type: Package
 Title: OSAT: Optimal Sample Assignment Tool
-Version: 1.4.0
+Version: 1.6.0
 Author: Li Yan
 Maintainer: Li Yan <li.yan@roswellpark.org>
 biocViews: Bioinformatics, DataRepresentation, Visualization, Design,
@@ -12,4 +12,4 @@ Description: A sizable genomics study such as microarray often involves the use 
 License: Artistic-2.0
 Collate: AllClasses.R AllGenerics.R gAssembly-class.R gSample-class.R
         gSetup-class.R gUtils.R
-Packaged: 2012-06-22 18:56:53 UTC; liyan
+Packaged: 2013-02-04 18:56:53 UTC; liyan
