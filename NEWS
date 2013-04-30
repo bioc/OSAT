@@ -2,7 +2,7 @@ CHANGES IN VERSION 1.8.1
 
 BUG FIXES
 
-    o "exlude" function now can be used when whole plates are excluded.
+    o "exlude"  arg in the gContainer construction now can be used when whole plates are excluded.
 
 NEW FUNCTION
 
