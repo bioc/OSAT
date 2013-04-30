@@ -507,3 +507,44 @@ predefined <- function(){
   print(l)
   message("\nType the name of the object for detailed layout information.\n")
 }
+
+
+
+### available positions only. exclude need plates, chips, wells
+## TODO: use signature (Rd need to be changed)
+setReplaceMethod("exclude","gContainer",
+#          signature=signature(
+#                   x="gContainer",
+#                   value="data.frame"),       
+          function(x, value) {
+            container <- x@data$container
+            if (x@batch=="chips" ) {
+              blockIdxName <- "chipID"
+            } else if (x@batch=="plates") {
+              blockIdxName <- "plates"
+            }            
+            cols <- colnames(container)
+            if ( nrow(value)>0){              
+              colIdx <- colnames(value) %in% c("plates", "chips", "wells")
+              if(sum(colIdx)==0) stop ("invalid exclusion list")
+              e <- value[,colIdx, drop=FALSE]
+              byCol <- colnames(e)
+              e$inExclude <- TRUE
+              t <- merge(container, e, by=byCol, sort=FALSE, all=TRUE)
+              wellIDs <- t[is.na(t[, "inExclude"]),"wellID"]
+              wellIDs <- wellIDs[order(wellIDs)]
+              idx <- container[, "wellID"] %in% wellIDs
+              x@data$container <- container[idx,]
+              x@exclude <- rbind(x@exclude, container[!idx,])
+              cnt <- as.data.frame(table(x@data$container[,"cFactor", drop=FALSE]))
+              colnames(cnt)[1] <- "cFactor"
+              cnt <- cbind(as.numeric(levels(cnt[,1]))[cnt[,1]], cnt)
+              colnames(cnt)[1] <- blockIdxName
+              cid <- x@data$container[,c(blockIdxName, "wellID", "cFactor")]
+              cid <- cid[order(cid$wellID),]
+              x@data$cid <- cid
+              x@data$blockTable <- cnt
+            }
+            x
+        })
+

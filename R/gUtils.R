@@ -28,7 +28,7 @@ multi.barplot <- function(x, grpVar="plates", varList, main=NULL, ...){
       nLevels <- length(dimnames(cnt)[[2]])
       colScale <- rep(seq(0.1,0.9,length=nPlates), nLevels)
       ## TODO: pass part of ... to here
-      barplot(cnt,  xlab=i, col=gray(colScale),  beside=TRUE)
+      barplot(cnt,  xlab=i, col=gray(colScale),  beside=TRUE, ...)
     }
     if (is.null(main)) main="Sample distribution"
     mtext(main, side=3, outer=TRUE, line=-3) 

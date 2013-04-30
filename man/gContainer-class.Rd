@@ -10,6 +10,8 @@
 \alias{metadata,gContainer-method}
 \alias{show,gContainer-method}
 \alias{setup.container}
+\alias{exclude<-}
+\alias{exclude<-,gContainer-method}
 
 \title{Class \code{"gContainer"}}
 \description{
@@ -68,7 +70,9 @@ A \code{gContainer} object.
       assembly of the plates used in the experiments. }
     \item{getLayout}{\code{signature(x = "gContainer")}:  Return a data
       frame that holds the layout of available wells in the container. }
-%     \item{initialize}{\code{signature(.Object = "gContainer")}: ... }
+    %     \item{initialize}{\code{signature(.Object = "gContainer")}: ... }
+    \item{exclude<-}{\code{signature(object = "gContainer")}: Exclude some
+      wells/chips/plates from the container for randomization. }
     \item{metadata<-}{\code{signature(x = "gContainer")}: Set the metadata. }
     \item{metadata}{\code{signature(x = "gContainer")}: Get the metadata. }
     \item{show}{\code{signature(object = "gContainer")}: A brief summary
