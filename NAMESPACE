@@ -36,7 +36,8 @@ exportMethods(
      "show",
      "summary",
      "metadata",
-     "metadata<-"
+     "metadata<-",
+     "exclude<-"
 )
 exportClasses(
               gArray,

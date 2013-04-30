@@ -51,3 +51,7 @@ if (!isGeneric("plot"))
 
 
 ## setGeneric("setup.sample", function(x, optimal, strata, ...) standardGeneric("setup.sample"))
+
+setGeneric("exclude<-",
+           function(x,value) standardGeneric("exclude<-"))
+

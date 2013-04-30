@@ -1,3 +1,14 @@
+CHANGES IN VERSION 1.8.1
+
+BUG FIXES
+
+    o "exlude" function now can be used when whole plates are excluded.
+
+NEW FUNCTION
+
+    o "exlude<-" is defined as generic and can be used to exclude wells from an existing container object.
+
+
 CHANGES IN VERSION 1.6.0
 
 BUG FIXES
