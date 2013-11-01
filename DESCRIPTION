@@ -1,7 +1,7 @@
 Package: OSAT
 Type: Package
 Title: OSAT: Optimal Sample Assignment Tool
-Version: 1.11.0
+Version: 1.11.1
 Author: Li Yan
 Maintainer: Li Yan <li.yan@roswellpark.org>
 biocViews: Bioinformatics, DataRepresentation, Visualization, Design,
